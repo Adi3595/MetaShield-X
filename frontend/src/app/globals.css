@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  /* Avant-Garde Premium Theme */
+  --color-brand-primary: #FFFFFF;
+  --color-brand-accent: #D4FF00;  /* Electric Chartreuse */
+  --color-brand-alert: #FF3300;   /* Neon Orange/Red */
+  
+  /* Carbon Black Backdrop */
+  --color-background: #111111;
+  --color-surface: #111111;
+  --color-surface-hover: #1A1A1A;
+  
+  --color-text-primary: #F4F4F5;
+  --color-text-secondary: #8B8B8B;
+  --color-border: #2A2A2A;
+  
+  --font-sans: var(--font-inter), sans-serif;
+  --font-space: var(--font-space), sans-serif;
+  --font-playfair: var(--font-playfair), serif;
+}
+
+@layer base {
+  :root {
+    --background: var(--color-background);
+    --foreground: var(--color-text-primary);
+  }
+  
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-inter), sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  /* Cinematic Avant-Garde Panel */
+  .editorial-panel {
+    @apply bg-surface border-b border-[var(--color-border)] transition-colors duration-500 hover:bg-white/[0.02];
+  }
+
+  /* Editorial Headers */
+  .tech-heading {
+    @apply font-playfair font-normal italic tracking-wide text-white;
+  }
+  
+  .data-font {
+    @apply font-space tracking-tighter;
+  }
+  
+  /* Extreme Status Badges */
+  .status-badge {
+    @apply px-4 py-1 rounded-full text-[10px] font-space font-bold uppercase tracking-[0.2em] inline-flex items-center gap-2;
+  }
+  
+  .status-badge.critical {
+    @apply bg-brand-alert text-black;
+  }
+  
+  .status-badge.high {
+    @apply bg-brand-accent text-black;
+  }
+  
+  .status-badge.medium {
+    @apply bg-transparent text-white border border-white/20;
+  }
+  
+  .status-badge.low {
+    @apply bg-transparent text-text-secondary border border-white/10;
+  }
+}
