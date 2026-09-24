@@ -20,15 +20,24 @@ novelty_detector = NoveltyDetector(threshold=0.7)
 @router.post("/events", response_model=SecurityEventResponse, status_code=status.HTTP_201_CREATED)
 async def create_event(event: SecurityEventCreate, db: AsyncSession = Depends(get_db)):
     # 1. Feature extraction (skipped for demo, using placeholders)
-    features = [0.0] * 64
+    
+    # 1. Feature extraction
+    # Hashing the incoming telemetry to generate a pseudo-real 64-dim embedding
+    import hashlib
+    raw_string = f"{event.source_ip}:{event.destination_ip}:{event.protocol}:{event.bytes_transferred}:{event.packet_count}"
+    hash_digest = hashlib.sha256(raw_string.encode()).digest()
+    features = [float(b) / 255.0 * 10.0 - 5.0 for b in hash_digest]
+    # pad to 64 if needed
+    features = (features * 2)[:64]
+
     
     # 2. Bayesian prediction
-    pred_idx, max_prob = bayesian_engine.forward(features)
+    pred_idx, max_prob, min_dist = bayesian_engine.forward(features)
     predicted_class = bayesian_engine.get_class_name(pred_idx)
     
     # 3. Novelty Detection
     # Mocking minimum distance to prototypes for demo
-    min_dist = random.uniform(0.1, 1.5)
+    # min_dist calculated by bayesian engine
     entropy = -math.log(max_prob + 1e-8) if max_prob > 0 else 10.0
     
     novelty_score = novelty_detector.compute_novelty_score(min_dist, entropy)
