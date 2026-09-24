@@ -25,6 +25,11 @@ export default function FewShotLab() {
         setIsGenerating(false);
         setIsComplete(true);
         setActiveTab('prototype');
+        
+        // Reset global drift level for the demo
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('metashield_drift', '0');
+        }
       }
     }, 200);
   };

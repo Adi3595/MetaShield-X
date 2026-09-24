@@ -19,6 +19,7 @@ type ThreatEvent = {
 export default function Dashboard() {
   const [stream, setStream] = useState<ThreatEvent[]>([]);
   const [isInferring, setIsInferring] = useState(false);
+  const [driftLevel, setDriftLevel] = useState(14);
 
   const fetchEvent = async () => {
     try {
@@ -45,6 +46,13 @@ export default function Dashboard() {
             if (prev.length === 0 || prev[0].id !== newEvents[0].id) {
               setIsInferring(true);
               setTimeout(() => setIsInferring(false), 800);
+              
+              // Simulate concept drift increasing as new attacks occur
+              if (typeof window !== 'undefined') {
+                const currentDrift = parseInt(localStorage.getItem('metashield_drift') || '14', 10);
+                const newDrift = Math.min(100, currentDrift + 2);
+                localStorage.setItem('metashield_drift', newDrift.toString());
+              }
             }
             return newEvents.slice(0, 8);
           });
@@ -58,6 +66,23 @@ export default function Dashboard() {
   useEffect(() => {
     const interval = setInterval(fetchEvent, 1000); // Poll every 1 second
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Read dynamic drift from localStorage to sync with Lab
+    const handleStorageChange = () => {
+      const storedDrift = localStorage.getItem('metashield_drift');
+      if (storedDrift !== null) {
+        setDriftLevel(parseInt(storedDrift, 10));
+      }
+    };
+    
+    // Initial check
+    handleStorageChange();
+    
+    // Check every second in case they have it open in another tab
+    const storageInterval = setInterval(handleStorageChange, 1000);
+    return () => clearInterval(storageInterval);
   }, []);
 
   return (
@@ -100,7 +125,7 @@ export default function Dashboard() {
         <MetricBox label="Anomalies" value="47" isAlert />
         <MetricBox label="Critical" value="18" isAlert />
         <MetricBox label="Accuracy" value="92.4%" />
-        <MetricBox label="Drift" value="14%" />
+        <MetricBox label="Drift" value={`${driftLevel}%`} />
         <MetricBox label="Latency" value="12ms" />
       </div>
 
@@ -167,8 +192,10 @@ export default function Dashboard() {
           
           <div className="border border-white/20 p-8 relative overflow-hidden group hover:border-brand-accent transition-colors duration-500">
              <div className="text-[10px] font-space text-text-secondary uppercase tracking-[0.2em] mb-8">Concept Drift Level</div>
-             <div className="text-8xl font-playfair italic font-light tracking-tighter text-white mb-2 group-hover:text-brand-accent transition-colors">14%</div>
-             <div className="font-space text-xs text-text-secondary uppercase tracking-wider border-t border-white/20 pt-4 mt-8">Distribution Stable</div>
+             <div className={`text-8xl font-playfair italic font-light tracking-tighter mb-2 transition-colors ${driftLevel > 0 ? 'text-white group-hover:text-brand-accent' : 'text-brand-accent'}`}>{driftLevel}%</div>
+             <div className="font-space text-xs text-text-secondary uppercase tracking-wider border-t border-white/20 pt-4 mt-8">
+               {driftLevel > 0 ? "Distribution Drifting" : "Distribution Stable - Fully Adapted"}
+             </div>
           </div>
           
           <div className="border border-white/20 p-8 flex flex-col h-full justify-between bg-white/[0.02]">
