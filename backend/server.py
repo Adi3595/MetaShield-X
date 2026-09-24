@@ -44,16 +44,22 @@ class MetaShieldAPIHandler(http.server.SimpleHTTPRequestHandler):
             event_data = json.loads(post_data.decode('utf-8'))
             
             # 1. Feature extraction placeholder (in a real system this transforms telemetry to vector)
-            features = [0.0] * 64 
+            
+            import hashlib
+            raw_string = f"{event_data.get('source_ip', '')}:{event_data.get('destination_ip', '')}:{event_data.get('protocol', '')}:{event_data.get('bytes_transferred', '')}:{event_data.get('packet_count', '')}"
+            hash_digest = hashlib.sha256(raw_string.encode()).digest()
+            features = [float(b) / 255.0 * 10.0 - 5.0 for b in hash_digest]
+            features = (features * 2)[:64]
+ 
             
             # 2. Bayesian prediction
-            pred_idx, max_prob = bayesian_engine.forward(features)
+            pred_idx, max_prob, min_dist = bayesian_engine.forward(features)
             predicted_class = bayesian_engine.get_class_name(pred_idx)
             
             # 3. Novelty Detection (Using Bayesian probability entropy)
             entropy = -math.log(max_prob + 1e-8) if max_prob > 0 else 10.0
             # For demo variation, we'll derive min_dist from the probability
-            min_dist = (1.0 - max_prob) * 1.5 
+            # min_dist calculated by bayesian engine 
             
             novelty_score = novelty_detector.compute_novelty_score(min_dist, entropy)
             is_novel = novelty_detector.is_novel(novelty_score)
